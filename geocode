@@ -1,0 +1,71 @@
+#! /bin/bash
+
+#This script uses the positionstack.com API to perform a forward or reverse query
+
+#usage function
+usage(){
+	echo ""
+	echo "USAGE: geocoding [-fr <address or coordinates>] [-k <API key>] "
+	echo "	-f	Performs forward lookup."
+	echo "	-r	Performs reverse lookup."
+	echo "	-k	Enter API key."
+	echo "	-i	Install dependancies."
+	echo ""
+	echo "Forward Lookup Example: geocode -f '30+Rockefeller+Plaza+New+York+,+NY -k 7a8b9149asdf89451234'"
+	echo "Reverse Lookup Example: geocode -r 46.469391,30.740883 -k 7a8b9149asdf89451234"
+	exit 1
+}
+
+#####UNCOMMENT THIS LINE AND ENTER API KEY TO ADD IT AS DEFAULT:
+#ACCESS_KEY=<enter your API key here>
+
+#Parse options
+while getopts f:r:k:i OPTION
+do
+	case ${OPTION} in
+		f)
+			BASE_URL="api.positionstack.com/v1/forward?access_key="
+			ADDRESS=${OPTARG}
+			;;
+		r)
+			BASE_URL="api.positionstack.com/v1/reverse?access_key="
+			ADDRESS=${OPTARG}
+			;;
+		k)
+			ACCESS_KEY=${OPTARG}
+			;;
+		i)
+			sudo apt install jq
+			exit 0;
+			;;
+		*)
+			usage
+			;;
+	esac
+done
+
+
+# If the user doesn't supply at least one argument, give them help.
+if [[ "${#}" -lt 1 ]]
+then
+  usage
+fi
+
+#If the user does not supply an API key ERROR
+if [[ -z ${ACCESS_KEY} ]]
+then
+	echo "No API key supplied"
+	exit 1
+fi
+
+#check if jq is installed
+command -v jq > /dev/null
+if [[ ${?} -ne 0 ]]
+then
+        echo "jq is not installed"
+	echo "run ${#} with the -i option to install dependancies"
+        exit 1
+fi
+
+#run curl command to query API with supplied arguments
+curl -X GET "${BASE_URL}${ACCESS_KEY}&query=${ADDRESS}" | jq
